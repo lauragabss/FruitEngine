@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Logger.h"
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
@@ -8,21 +9,22 @@
 Game::Game()
 {
 	// TODO
-	printf("\n Constructor Game called \n");
+	Logger::Log("Constructor Game called");
 	IsRunning = false;
 }
 
 Game::~Game()
 {
 	// TODO
-	printf("\n Game destructor called \n");
+	Logger::Log("Game destructor called");
 }
 
 void Game::Initialize()
 {
+	Logger::Err("Testing error.");
 	if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_CAMERA | SDL_INIT_EVENTS | SDL_INIT_GAMEPAD | SDL_INIT_HAPTIC | SDL_INIT_JOYSTICK | SDL_INIT_SENSOR | SDL_INIT_VIDEO))
 	{
-		std::cerr << "Error initializing SDL." << std::endl;
+		Logger::Err("Error initializing SDL.");
 		return;
 	}
 
@@ -36,7 +38,7 @@ void Game::Initialize()
 
 	if (!Window)
 	{
-		std::cerr << "Error creating SDL window." << std::endl;
+		Logger::Err("Error creating SDL window.");
 		return;
 	}
 
@@ -47,7 +49,7 @@ void Game::Initialize()
 	Renderer = SDL_CreateRenderer(Window, NULL);
 	if (!Renderer)
 	{
-		std::cerr << "Error creating SDL renderer." << std::endl;
+		Logger::Err("Error creating SDL renderer.");
 		return;
 	}
 
