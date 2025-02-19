@@ -30,3 +30,30 @@
 *.exe
 *.out
 *.app
+
+# Ignore Visual Studio-specific files
+.vscode/
+.vs/
+.x64/
+.FrutinhaEngine/
+x64/
+FrutinhaEngine/
+*.user
+*.suo
+*.userosscache
+*.sln.ide
+*.sln
+*.vcxproj
+*.vcxproj.*
+
+# Ignore compiled object files, libraries, and executables
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.exe
+*.out
+*.aseprite
+
+
