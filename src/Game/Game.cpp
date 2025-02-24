@@ -1,5 +1,9 @@
 #include "Game.h"
-#include "Logger.h"
+#include "../Logger/Logger.h"
+#include "../ECS/ECS.h"
+#include "../Components/TransformComponent.h"
+#include "../Components/RigidBodyComponent.h"
+#include "../Systems/MovementSystem.h"
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
@@ -8,8 +12,9 @@
 
 Game::Game()
 {
-	// TODO
 	Logger::Log("Constructor Game called");
+	Registry_ = std::make_unique<Registry>();
+
 	IsRunning = false;
 }
 
@@ -21,7 +26,6 @@ Game::~Game()
 
 void Game::Initialize()
 {
-	Logger::Err("Testing error.");
 	if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_CAMERA | SDL_INIT_EVENTS | SDL_INIT_GAMEPAD | SDL_INIT_HAPTIC | SDL_INIT_JOYSTICK | SDL_INIT_SENSOR | SDL_INIT_VIDEO))
 	{
 		Logger::Err("Error initializing SDL.");
@@ -66,16 +70,16 @@ void Game::Run()
 	}
 }
 
-glm::vec2 playerPosition;
-glm::vec2 playerVelocity;
-
 void Game::Setup()
 {
-	// TODO: Initialize game objects
-	playerPosition = glm::vec2(10.0, 20.0);
+	// Add the systems that need to be processed in the game
+	Registry_->AddSystem<MovementSystem>();
 
-	// Pixels per second
-	playerVelocity = glm::vec2(20.0, 50.0);
+	// Create some entities
+	Entity fruit = Registry_->CreateEntity();
+
+	fruit.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(1.0, 1.0), 0.0);
+	fruit.AddComponent<RigidBodyComponent>(glm::vec2(5.0, 1.0));
 }
 
 void Game::ProcessInput()
@@ -114,32 +118,22 @@ void Game::Update()
 	}
 
 	// Time passed between frames in seconds
-	double deltaTime = (SDL_GetTicks() - MillisecondsPreviousFrame) / 1000.0;
+	double deltatime = (SDL_GetTicks() - MillisecondsPreviousFrame) / 1000.0;
 
 	// Store current frame time
 	MillisecondsPreviousFrame = SDL_GetTicks();
 
-	playerPosition.x += playerVelocity.x * deltaTime;
-	playerPosition.y += playerVelocity.y * deltaTime;
+	// Ask all Systems to update
+	Registry_->GetSystem<MovementSystem>().Update(deltatime);
+
+	// Update the Registry (to process the entities waiting to be created/deleted) - this has to be tha last task of the frame
+	Registry_->Update();
 }
 
 void Game::Render()
 {
 	SDL_SetRenderDrawColor(Renderer, 200, 100, 255, 255);
 	SDL_RenderClear(Renderer);
-
-	SDL_Surface* surface = IMG_Load("./assets/images/Potion.png");
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(Renderer, surface);
-	SDL_DestroySurface(surface);
-
-	SDL_FRect rect1;
-	rect1.x = playerPosition.x;
-	rect1.y = playerPosition.y;
-	rect1.w = texture->w;
-	rect1.h = texture->h;
-
-	SDL_RenderTexture(Renderer, texture, NULL, &rect1);
-	SDL_DestroyTexture(texture);
 
 	SDL_RenderPresent(Renderer);
 }
