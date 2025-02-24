@@ -3,7 +3,9 @@
 #include "../ECS/ECS.h"
 #include "../Components/TransformComponent.h"
 #include "../Components/RigidBodyComponent.h"
+#include "../Components/SpriteComponent.h"
 #include "../Systems/MovementSystem.h"
+#include "../Systems/RenderSystem.h"
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
@@ -74,12 +76,18 @@ void Game::Setup()
 {
 	// Add the systems that need to be processed in the game
 	Registry_->AddSystem<MovementSystem>();
+	Registry_->AddSystem<RenderSystem>();
 
 	// Create some entities
 	Entity fruit = Registry_->CreateEntity();
-
 	fruit.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(1.0, 1.0), 0.0);
-	fruit.AddComponent<RigidBodyComponent>(glm::vec2(5.0, 1.0));
+	fruit.AddComponent<RigidBodyComponent>(glm::vec2(5.0, 3.0));
+	fruit.AddComponent<SpriteComponent>();
+
+	Entity other = Registry_->CreateEntity();
+	other.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(1.0, 1.0), 0.0);
+	other.AddComponent<RigidBodyComponent>(glm::vec2(10.0, 10.0));
+	other.AddComponent<SpriteComponent>(64, 64);
 }
 
 void Game::ProcessInput()
@@ -134,6 +142,9 @@ void Game::Render()
 {
 	SDL_SetRenderDrawColor(Renderer, 200, 100, 255, 255);
 	SDL_RenderClear(Renderer);
+
+	// Invoke all the systems that need to render
+	Registry_->GetSystem<RenderSystem>().Update(Renderer);
 
 	SDL_RenderPresent(Renderer);
 }
