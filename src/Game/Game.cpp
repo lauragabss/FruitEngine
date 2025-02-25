@@ -6,6 +6,7 @@
 #include "../Components/SpriteComponent.h"
 #include "../Systems/MovementSystem.h"
 #include "../Systems/RenderSystem.h"
+#include "../AssetManager/AssetManager.h"
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
@@ -16,6 +17,7 @@ Game::Game()
 {
 	Logger::Log("Constructor Game called");
 	Registry_ = std::make_unique<Registry>();
+	AssetManager_ = std::make_unique<AssetManager>();
 
 	IsRunning = false;
 }
@@ -78,16 +80,20 @@ void Game::Setup()
 	Registry_->AddSystem<MovementSystem>();
 	Registry_->AddSystem<RenderSystem>();
 
+	// Adding assets to the asset manager
+	AssetManager_->AddTexture(Renderer, "fruit-image", "./assets/images/FrutinhaOriginalSize.png");
+	AssetManager_->AddTexture(Renderer, "tank-image", "./assets/images/tank-panther-right.png");
+
 	// Create some entities
 	Entity fruit = Registry_->CreateEntity();
-	fruit.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(1.0, 1.0), 0.0);
+	fruit.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(3.0, 3.0), 0.0);
 	fruit.AddComponent<RigidBodyComponent>(glm::vec2(5.0, 3.0));
-	fruit.AddComponent<SpriteComponent>();
+	fruit.AddComponent<SpriteComponent>("fruit-image", 32, 32);
 
 	Entity other = Registry_->CreateEntity();
-	other.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(1.0, 1.0), 0.0);
+	other.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(5.0, 5.0), 45.0);
 	other.AddComponent<RigidBodyComponent>(glm::vec2(10.0, 10.0));
-	other.AddComponent<SpriteComponent>(64, 64);
+	other.AddComponent<SpriteComponent>("tank-image", 32, 32);
 }
 
 void Game::ProcessInput()
@@ -144,7 +150,7 @@ void Game::Render()
 	SDL_RenderClear(Renderer);
 
 	// Invoke all the systems that need to render
-	Registry_->GetSystem<RenderSystem>().Update(Renderer);
+	Registry_->GetSystem<RenderSystem>().Update(Renderer, *AssetManager_);
 
 	SDL_RenderPresent(Renderer);
 }

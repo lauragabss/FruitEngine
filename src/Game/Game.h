@@ -7,6 +7,7 @@ const int FPS = 60;
 const int MILLISECS_PER_FRAME = 1000 / FPS;
 
 class Registry;
+class AssetManager;
 
 class Game 
 {
@@ -17,6 +18,7 @@ private:
 	SDL_Renderer* Renderer = nullptr;
 
 	std::unique_ptr<Registry> Registry_;
+	std::unique_ptr<AssetManager> AssetManager_;
 
 public:
 	Game();

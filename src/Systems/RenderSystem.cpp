@@ -1,6 +1,7 @@
 #include "RenderSystem.h"
 #include "../Components/SpriteComponent.h"
 #include "../Components/TransformComponent.h"
+#include "../AssetManager/AssetManager.h"
 
 RenderSystem::RenderSystem()
 {
@@ -8,7 +9,7 @@ RenderSystem::RenderSystem()
 	RequireComponent<TransformComponent>();
 }
 
-void RenderSystem::Update(SDL_Renderer* renderer)
+void RenderSystem::Update(SDL_Renderer* renderer, AssetManager& assetManager)
 {
 	// Update entity position according to velocity every frame of the application
 	for (auto entity : GetSystemEntities())
@@ -16,13 +17,25 @@ void RenderSystem::Update(SDL_Renderer* renderer)
 		const auto transform = entity.GetComponent<TransformComponent>();
 		const auto sprite = entity.GetComponent<SpriteComponent>();
 
-		SDL_FRect objRect = {
-			static_cast<int>(transform.position.x),
-			static_cast<int>(transform.position.y),
-			sprite.width,
-			sprite.height
+		// Section of texture to be used
+		SDL_FRect sourceRec = sprite.sourceRec;
+
+		// Rectangle position and size on screen
+		SDL_FRect destinationRec = {
+			transform.position.x,
+			transform.position.y,
+			sprite.width * transform.scale.x,
+			sprite.height * transform.scale.y
 		};
-		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 200);
-		SDL_RenderFillRect(renderer, &objRect);
+
+		SDL_RenderTextureRotated(
+			renderer,
+			assetManager.GetTexture(sprite.assetId),
+			&sourceRec,
+			&destinationRec,
+			transform.rotation,
+			NULL,
+			SDL_FLIP_NONE
+		);
 	}
 }
