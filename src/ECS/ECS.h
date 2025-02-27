@@ -256,7 +256,7 @@ void Registry::AddComponent(Entity entity, TArgs && ...args)
 	// Add the new component to the component pool list
 	componentPool->Set(entityId, newComponent);
 
-	Logger::Log("Component id = " + std::to_string(componentId) + " was added to entity id = " + std::to_string(entityId));
+	// Logger::Log("Component id = " + std::to_string(componentId) + " was added to entity id = " + std::to_string(entityId));
 
 	// Change the component signature of the entity to set the component id on the bitset to 1
 	EntityComponentSignatures[entityId].set(componentId);
@@ -270,7 +270,7 @@ inline void Registry::RemoveComponent(Entity entity)
 
 	EntityComponentSignatures[entityId].set(componentId, false);
 
-	Logger::Log("Component id = " + std::to_string(componentId) + " was removed from entity id = " + std::to_string(entityId));
+	// Logger::Log("Component id = " + std::to_string(componentId) + " was removed from entity id = " + std::to_string(entityId));
 }
 
 template<typename TComponent>

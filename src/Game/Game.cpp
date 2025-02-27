@@ -1,13 +1,17 @@
 #include "Game.h"
 #include "../Logger/Logger.h"
 #include "../ECS/ECS.h"
+#include "../Components/AnimationComponent.h"
 #include "../Components/TransformComponent.h"
 #include "../Components/RigidBodyComponent.h"
 #include "../Components/SpriteComponent.h"
+#include "../Systems/AnimationSystem.h"
 #include "../Systems/MovementSystem.h"
 #include "../Systems/RenderSystem.h"
 #include "../AssetManager/AssetManager.h"
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3_image/SDL_image.h>
@@ -74,26 +78,108 @@ void Game::Run()
 	}
 }
 
-void Game::Setup()
+void Game::LoadLevel(int level)
 {
 	// Add the systems that need to be processed in the game
 	Registry_->AddSystem<MovementSystem>();
 	Registry_->AddSystem<RenderSystem>();
+	Registry_->AddSystem<AnimationSystem>();
 
 	// Adding assets to the asset manager
 	AssetManager_->AddTexture(Renderer, "fruit-image", "./assets/images/FrutinhaOriginalSize.png");
 	AssetManager_->AddTexture(Renderer, "tank-image", "./assets/images/tank-panther-right.png");
+	AssetManager_->AddTexture(Renderer, "chopper-image", "./assets/images/chopper.png");
+	AssetManager_->AddTexture(Renderer, "radar-image", "./assets/images/radar.png");
+	AssetManager_->AddTexture(Renderer, "potion-image", "./assets/images/Potion.png");
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	/// MAP BACKGROUND
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	AssetManager_->AddTexture(Renderer, "jungle-tilemap", "./assets/tilemaps/jungle.png");
+
+	int tileSize = 32;
+	double tileScale = 2.0;
+
+	std::ifstream mapFile("./assets/tilemaps/jungle.map");
+	// mapFile.open("./assets/tilemaps/jungle.map");
+	if (!mapFile)
+	{
+		Logger::Err("Couldn't open map file");
+	}
+	else
+	{
+		std::string line, value;
+
+		int mapNumCols = 1;
+
+		for (int j = 0; j < mapNumCols; j++)
+		{
+
+			if (std::getline(mapFile, line))
+			{
+				std::string value;
+				int i = 0;
+				for (char c : line)
+				{
+					if (c == ',' || c == ';')
+					{
+						printf("\nTile values = [%c, %c] - %d\n", value[0], value[1], value.size());
+
+						Entity tile = Registry_->CreateEntity();
+						// Position / Scale / Rotation
+						tile.AddComponent<TransformComponent>(glm::vec2(i * (tileSize * tileScale), j * (tileSize * tileScale)), glm::vec2(tileScale, tileScale));
+
+						// Texture / SizeX / Size Y / Source X / Source Y
+						int sourceX = ((value[1] - '0') * tileSize);
+						int sourceY = ((value[0] - '0') * tileSize);
+						tile.AddComponent<SpriteComponent>("jungle-tilemap", tileSize, tileSize, 0, sourceX, sourceY);
+
+						// Add for next position
+						value = "";
+						if (c == ';')
+						{
+							mapNumCols++;
+						}
+						i++;
+					}
+					else
+					{
+						value.push_back(c);
+					}
+				}
+			}
+		}
+		mapFile.close();
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// Create some entities
 	Entity fruit = Registry_->CreateEntity();
 	fruit.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(3.0, 3.0), 0.0);
 	fruit.AddComponent<RigidBodyComponent>(glm::vec2(5.0, 3.0));
-	fruit.AddComponent<SpriteComponent>("fruit-image", 32, 32);
+	fruit.AddComponent<SpriteComponent>("fruit-image", 32, 32, 2);
 
 	Entity other = Registry_->CreateEntity();
-	other.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(5.0, 5.0), 45.0);
-	other.AddComponent<RigidBodyComponent>(glm::vec2(10.0, 10.0));
-	other.AddComponent<SpriteComponent>("tank-image", 32, 32);
+	other.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(5.0, 5.0), 0.0);
+	other.AddComponent<RigidBodyComponent>(glm::vec2(10.0, 0.0));
+	other.AddComponent<SpriteComponent>("chopper-image", 32, 32, 1);
+	other.AddComponent<AnimationComponent>(2, 10, true);
+
+	Entity radar = Registry_->CreateEntity();
+	radar.AddComponent<TransformComponent>(glm::vec2(WindowWidth - 74, 10.0), glm::vec2(2.0, 2.0), 0.0);
+	radar.AddComponent<SpriteComponent>("radar-image", 64, 64, 3);
+	radar.AddComponent<AnimationComponent>(8, 10, true, horizontal);
+
+	Entity potion = Registry_->CreateEntity();
+	potion.AddComponent<TransformComponent>(glm::vec2(500.0, 30.0), glm::vec2(3.0, 3.0), 0.0);
+	potion.AddComponent<RigidBodyComponent>(glm::vec2(5.0, 0.0));
+	potion.AddComponent<SpriteComponent>("potion-image", 16, 17, 1);
+	potion.AddComponent<AnimationComponent>(4, 5, true, vertical);
+}
+
+void Game::Setup()
+{
+	LoadLevel(1);
 }
 
 void Game::ProcessInput()
@@ -139,6 +225,7 @@ void Game::Update()
 
 	// Ask all Systems to update
 	Registry_->GetSystem<MovementSystem>().Update(deltatime);
+	Registry_->GetSystem<AnimationSystem>().Update();
 
 	// Update the Registry (to process the entities waiting to be created/deleted) - this has to be tha last task of the frame
 	Registry_->Update();
