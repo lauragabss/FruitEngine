@@ -2,11 +2,14 @@
 #include "../Logger/Logger.h"
 #include "../ECS/ECS.h"
 #include "../Components/AnimationComponent.h"
+#include "../Components/BoxColliderComponent.h"
 #include "../Components/TransformComponent.h"
 #include "../Components/RigidBodyComponent.h"
 #include "../Components/SpriteComponent.h"
 #include "../Systems/AnimationSystem.h"
+#include "../Systems/CollisionSystem.h"
 #include "../Systems/MovementSystem.h"
+#include "../Systems/RenderColliderSystem.h"
 #include "../Systems/RenderSystem.h"
 #include "../AssetManager/AssetManager.h"
 #include <iostream>
@@ -24,6 +27,7 @@ Game::Game()
 	AssetManager_ = std::make_unique<AssetManager>();
 
 	IsRunning = false;
+	IsDebug = false;
 }
 
 Game::~Game()
@@ -84,6 +88,8 @@ void Game::LoadLevel(int level)
 	Registry_->AddSystem<MovementSystem>();
 	Registry_->AddSystem<RenderSystem>();
 	Registry_->AddSystem<AnimationSystem>();
+	Registry_->AddSystem<CollisionSystem>();
+	Registry_->AddSystem<RenderColliderSystem>();
 
 	// Adding assets to the asset manager
 	AssetManager_->AddTexture(Renderer, "fruit-image", "./assets/images/FrutinhaOriginalSize.png");
@@ -123,7 +129,6 @@ void Game::LoadLevel(int level)
 				{
 					if (c == ',' || c == ';')
 					{
-						printf("\nTile values = [%c, %c] - %d\n", value[0], value[1], value.size());
 
 						Entity tile = Registry_->CreateEntity();
 						// Position / Scale / Rotation
@@ -160,10 +165,11 @@ void Game::LoadLevel(int level)
 	fruit.AddComponent<SpriteComponent>("fruit-image", 32, 32, 2);
 
 	Entity other = Registry_->CreateEntity();
-	other.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(5.0, 5.0), 0.0);
+	other.AddComponent<TransformComponent>(glm::vec2(300.0, 30.0), glm::vec2(1.0, 1.0), 0.0);
 	other.AddComponent<RigidBodyComponent>(glm::vec2(10.0, 0.0));
 	other.AddComponent<SpriteComponent>("chopper-image", 32, 32, 1);
 	other.AddComponent<AnimationComponent>(2, 10, true);
+	other.AddComponent<BoxColliderComponent>(32,32);
 
 	Entity radar = Registry_->CreateEntity();
 	radar.AddComponent<TransformComponent>(glm::vec2(WindowWidth - 74, 10.0), glm::vec2(2.0, 2.0), 0.0);
@@ -171,10 +177,11 @@ void Game::LoadLevel(int level)
 	radar.AddComponent<AnimationComponent>(8, 10, true, horizontal);
 
 	Entity potion = Registry_->CreateEntity();
-	potion.AddComponent<TransformComponent>(glm::vec2(500.0, 30.0), glm::vec2(3.0, 3.0), 0.0);
-	potion.AddComponent<RigidBodyComponent>(glm::vec2(5.0, 0.0));
+	potion.AddComponent<TransformComponent>(glm::vec2(500.0, 30.0), glm::vec2(1.0, 1.0), 0.0);
+	potion.AddComponent<RigidBodyComponent>(glm::vec2(-5.0, 0.0));
 	potion.AddComponent<SpriteComponent>("potion-image", 16, 17, 1);
 	potion.AddComponent<AnimationComponent>(4, 5, true, vertical);
+	potion.AddComponent<BoxColliderComponent>(16, 17);
 }
 
 void Game::Setup()
@@ -197,6 +204,10 @@ void Game::ProcessInput()
 			if(sdlEvent.key.key == SDLK_ESCAPE)
 			{
 				IsRunning = false;
+			}
+			if(sdlEvent.key.key == SDLK_D)
+			{
+				IsDebug = !IsDebug;
 			}
 			break;
 		}
@@ -226,6 +237,7 @@ void Game::Update()
 	// Ask all Systems to update
 	Registry_->GetSystem<MovementSystem>().Update(deltatime);
 	Registry_->GetSystem<AnimationSystem>().Update();
+	Registry_->GetSystem<CollisionSystem>().Update();
 
 	// Update the Registry (to process the entities waiting to be created/deleted) - this has to be tha last task of the frame
 	Registry_->Update();
@@ -238,6 +250,11 @@ void Game::Render()
 
 	// Invoke all the systems that need to render
 	Registry_->GetSystem<RenderSystem>().Update(Renderer, *AssetManager_);
+
+	if(IsDebug)
+	{
+		Registry_->GetSystem<RenderColliderSystem>().Update(Renderer);
+	}
 
 	SDL_RenderPresent(Renderer);
 }
