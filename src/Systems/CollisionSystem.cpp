@@ -43,6 +43,8 @@ void CollisionSystem::Update()
 			if (collisionHappened)
 			{
 				Logger::Log("Entity " + std::to_string(a.GetId()) + " is colliding with " + std::to_string(b.GetId()));
+
+				// TODO: dispatch an event
 			}
 		}
 	}

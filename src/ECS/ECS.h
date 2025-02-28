@@ -1,5 +1,6 @@
 #pragma once
 #include <bitset>
+#include <deque>
 #include <vector>
 #include <unordered_map>
 #include <typeindex>
@@ -47,6 +48,7 @@ private:
 
 public:
 	Entity(int id) : id(id) {};
+	void Kill();
 	int GetId() const { return id; };
 
 	class Registry* Registry_ = nullptr;
@@ -173,6 +175,9 @@ private:
 	std::set<Entity> EntitiesToBeAdded;
 	std::set<Entity> EntitiesToBeRemoved;
 
+	// List of available free entity ids that were previously removed
+	std::deque<int> FreeIds;
+
 	// Vector of component pools, each pool contains all data for a certain component type
 	// Vector index is the component type id
 	// Pool index = entity id
@@ -213,6 +218,9 @@ public:
 
 	// Checks the component signature of an entity and add the entity to the systems
 	void AddEntityToSystems(Entity entity);
+
+	// Checks the component signature of an entity and remove entity from systems
+	void RemoveEntityFromSystems(Entity entity);
 };
 
 template <typename TComponent>

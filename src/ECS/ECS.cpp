@@ -36,16 +36,38 @@ void Registry::Update()
 	}
 	EntitiesToBeAdded.clear();
 
-	// TODO: Remove entities that are waiting to be removed from the system
+	// Remove entities that are waiting to be removed from the system
+	for(auto entity : EntitiesToBeRemoved)
+	{
+		RemoveEntityFromSystems(entity);
+
+		EntityComponentSignatures[entity.GetId()].reset();
+
+		// Make entity id available to be reused
+		FreeIds.push_back(entity.GetId());
+	}
+	EntitiesToBeRemoved.clear();
 }
 
 Entity Registry::CreateEntity()
 {
-	int entityId = numEntities++;
-	if (entityId >= EntityComponentSignatures.size())
+	int entityId;
+	if (FreeIds.empty())
 	{
-		EntityComponentSignatures.resize(entityId + 1);
+		// If there are no empty ids to be used
+		entityId = numEntities++;
+		if (entityId >= EntityComponentSignatures.size())
+		{
+			EntityComponentSignatures.resize(entityId + 1);
+		}
 	}
+	else
+	{
+		// Reuse id from previously removed entities
+		entityId = FreeIds.front();
+		FreeIds.pop_front();
+	}
+
 	Entity entity(entityId);
 	entity.Registry_ = this;
 	EntitiesToBeAdded.insert(entity);
@@ -81,4 +103,17 @@ void Registry::AddEntityToSystems(Entity entity)
 			system.second->AddEntityToSystem(entity);
 		}
 	}
+}
+
+void Registry::RemoveEntityFromSystems(Entity entity)
+{
+	for (auto& system : Systems)
+	{
+		system.second->RemoveEntityFromSystem(entity);
+	}
+}
+
+void Entity::Kill()
+{
+	Registry_->KillEntity(*this);
 }
