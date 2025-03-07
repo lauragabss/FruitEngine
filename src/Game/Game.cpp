@@ -2,14 +2,17 @@
 #include "../Logger/Logger.h"
 #include "../ECS/ECS.h"
 #include "../EventBus/EventBus.h"
+#include "../Events/KeyPressedEvent.h"
 #include "../Components/AnimationComponent.h"
 #include "../Components/BoxColliderComponent.h"
+#include "../Components/KeyboardControlledComponent.h"
 #include "../Components/TransformComponent.h"
 #include "../Components/RigidBodyComponent.h"
 #include "../Components/SpriteComponent.h"
 #include "../Systems/AnimationSystem.h"
 #include "../Systems/CollisionSystem.h"
 #include "../Systems/DamageSystem.h"
+#include "../Systems/KeyboardControlSystem.h"
 #include "../Systems/MovementSystem.h"
 #include "../Systems/RenderColliderSystem.h"
 #include "../Systems/RenderSystem.h"
@@ -94,11 +97,12 @@ void Game::LoadLevel(int level)
 	Registry_->AddSystem<CollisionSystem>();
 	Registry_->AddSystem<RenderColliderSystem>();
 	Registry_->AddSystem<DamageSystem>();
+	Registry_->AddSystem<KeyboardControlSystem>();
 
 	// Adding assets to the asset manager
 	AssetManager_->AddTexture(Renderer, "fruit-image", "./assets/images/FrutinhaOriginalSize.png");
 	AssetManager_->AddTexture(Renderer, "tank-image", "./assets/images/tank-panther-right.png");
-	AssetManager_->AddTexture(Renderer, "chopper-image", "./assets/images/chopper.png");
+	AssetManager_->AddTexture(Renderer, "chopper-image", "./assets/images/chopper-spritesheet.png");
 	AssetManager_->AddTexture(Renderer, "radar-image", "./assets/images/radar.png");
 	AssetManager_->AddTexture(Renderer, "potion-image", "./assets/images/Potion.png");
 
@@ -174,6 +178,8 @@ void Game::LoadLevel(int level)
 	other.AddComponent<SpriteComponent>("chopper-image", 32, 32, 1);
 	other.AddComponent<AnimationComponent>(2, 10, true);
 	other.AddComponent<BoxColliderComponent>(32,32);
+	other.AddComponent<KeyboardControlledComponent>(glm::vec2(0, -20), glm::vec2(20, 0), glm::vec2(0, 20), glm::vec2(-20,0));
+
 
 	Entity radar = Registry_->CreateEntity();
 	radar.AddComponent<TransformComponent>(glm::vec2(WindowWidth - 74, 10.0), glm::vec2(2.0, 2.0), 0.0);
@@ -205,6 +211,7 @@ void Game::ProcessInput()
 			break;
 
 		case SDL_EVENT_KEY_DOWN:
+			EventBus_->EmitEvent<KeyPressedEvent>(sdlEvent.key.key);
 			if(sdlEvent.key.key == SDLK_ESCAPE)
 			{
 				IsRunning = false;
@@ -216,7 +223,6 @@ void Game::ProcessInput()
 			break;
 		}
 	}
-	
 }
 
 
@@ -243,12 +249,14 @@ void Game::Update()
 
 	// Subscription of events for all systems
 	Registry_->GetSystem<DamageSystem>().SubscribeToEvents(EventBus_);
+	Registry_->GetSystem<KeyboardControlSystem>().SubscribeToEvents(EventBus_);
 
 	// Ask all Systems to update
 	Registry_->GetSystem<MovementSystem>().Update(deltatime);
 	Registry_->GetSystem<AnimationSystem>().Update();
 	Registry_->GetSystem<CollisionSystem>().Update(EventBus_);
 	Registry_->GetSystem<DamageSystem>().Update();
+	Registry_->GetSystem<KeyboardControlSystem>().Update();
 
 	// Update the Registry (to process the entities waiting to be created/deleted) - this has to be tha last task of the frame
 	Registry_->Update();

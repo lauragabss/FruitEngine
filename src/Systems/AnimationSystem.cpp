@@ -23,11 +23,9 @@ void AnimationSystem::Update()
 		if (animationComponent.animDirection == horizontal) 
 		{
 		spriteComponent.sourceRec.x = animationComponent.currentFrame * spriteComponent.width;
-		spriteComponent.sourceRec.y = 0;
 		}
 		else 
 		{
-			spriteComponent.sourceRec.x = 0;
 			spriteComponent.sourceRec.y = animationComponent.currentFrame * spriteComponent.height;
 		}
 	}
