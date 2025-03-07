@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "../Logger/Logger.h"
 #include "../ECS/ECS.h"
+#include "../EventBus/EventBus.h"
 #include "../Components/AnimationComponent.h"
 #include "../Components/BoxColliderComponent.h"
 #include "../Components/TransformComponent.h"
@@ -8,6 +9,7 @@
 #include "../Components/SpriteComponent.h"
 #include "../Systems/AnimationSystem.h"
 #include "../Systems/CollisionSystem.h"
+#include "../Systems/DamageSystem.h"
 #include "../Systems/MovementSystem.h"
 #include "../Systems/RenderColliderSystem.h"
 #include "../Systems/RenderSystem.h"
@@ -25,6 +27,7 @@ Game::Game()
 	Logger::Log("Constructor Game called");
 	Registry_ = std::make_unique<Registry>();
 	AssetManager_ = std::make_unique<AssetManager>();
+	EventBus_ = std::make_unique<EventBus>();
 
 	IsRunning = false;
 	IsDebug = false;
@@ -90,6 +93,7 @@ void Game::LoadLevel(int level)
 	Registry_->AddSystem<AnimationSystem>();
 	Registry_->AddSystem<CollisionSystem>();
 	Registry_->AddSystem<RenderColliderSystem>();
+	Registry_->AddSystem<DamageSystem>();
 
 	// Adding assets to the asset manager
 	AssetManager_->AddTexture(Renderer, "fruit-image", "./assets/images/FrutinhaOriginalSize.png");
@@ -234,10 +238,17 @@ void Game::Update()
 	// Store current frame time
 	MillisecondsPreviousFrame = SDL_GetTicks();
 
+	// Reset event handlers for the frame
+	EventBus_->Reset();
+
+	// Subscription of events for all systems
+	Registry_->GetSystem<DamageSystem>().SubscribeToEvents(EventBus_);
+
 	// Ask all Systems to update
 	Registry_->GetSystem<MovementSystem>().Update(deltatime);
 	Registry_->GetSystem<AnimationSystem>().Update();
-	Registry_->GetSystem<CollisionSystem>().Update();
+	Registry_->GetSystem<CollisionSystem>().Update(EventBus_);
+	Registry_->GetSystem<DamageSystem>().Update();
 
 	// Update the Registry (to process the entities waiting to be created/deleted) - this has to be tha last task of the frame
 	Registry_->Update();

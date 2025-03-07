@@ -1,6 +1,8 @@
 #include "CollisionSystem.h"
 #include "../Components/BoxColliderComponent.h"
 #include "../Components/TransformComponent.h"
+#include "../EventBus/EventBus.h"
+#include "../Events/CollisionEvent.h"
 
 CollisionSystem::CollisionSystem()
 {
@@ -8,7 +10,7 @@ CollisionSystem::CollisionSystem()
 	RequireComponent<BoxColliderComponent>();
 }
 
-void CollisionSystem::Update()
+void CollisionSystem::Update(std::unique_ptr<EventBus>& eventBus)
 {
 	// Check all entities that have a collision component and see if they are colliding wih each other
 	auto entities = GetSystemEntities();
@@ -44,7 +46,7 @@ void CollisionSystem::Update()
 			{
 				Logger::Log("Entity " + std::to_string(a.GetId()) + " is colliding with " + std::to_string(b.GetId()));
 
-				// TODO: dispatch an event
+				eventBus->EmitEvent<CollisionEvent>(a, b);
 			}
 		}
 	}

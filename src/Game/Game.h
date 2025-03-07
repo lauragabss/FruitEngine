@@ -8,6 +8,7 @@ const int MILLISECS_PER_FRAME = 1000 / FPS;
 
 class Registry;
 class AssetManager;
+class EventBus;
 
 class Game 
 {
@@ -20,6 +21,7 @@ private:
 
 	std::unique_ptr<Registry> Registry_;
 	std::unique_ptr<AssetManager> AssetManager_;
+	std::unique_ptr<EventBus> EventBus_;
 
 public:
 	Game();
