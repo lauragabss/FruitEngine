@@ -10,5 +10,5 @@ class RenderSystem : public System
 public:
 	RenderSystem();
 
-	void Update(SDL_Renderer* renderer, AssetManager& assetManager);
+	void Update(SDL_Renderer* renderer, AssetManager& assetManager, SDL_Rect& camera);
 };

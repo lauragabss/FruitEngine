@@ -18,6 +18,7 @@ private:
 	int MillisecondsPreviousFrame = 0;
 	SDL_Window* Window = nullptr;
 	SDL_Renderer* Renderer = nullptr;
+	SDL_Rect Camera;
 
 	std::unique_ptr<Registry> Registry_;
 	std::unique_ptr<AssetManager> AssetManager_;
@@ -36,6 +37,8 @@ public:
 	void Render();
 	void Destroy();
 
-	int WindowWidth = 800;
-	int WindowHeight = 600;
+	static int WindowWidth;
+	static int WindowHeight;
+	static int MapWidth;
+	static int MapHeight;
 };

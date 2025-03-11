@@ -5,11 +5,13 @@
 #include "../Events/KeyPressedEvent.h"
 #include "../Components/AnimationComponent.h"
 #include "../Components/BoxColliderComponent.h"
+#include "../Components/CameraFollowComponent.h"
 #include "../Components/KeyboardControlledComponent.h"
 #include "../Components/TransformComponent.h"
 #include "../Components/RigidBodyComponent.h"
 #include "../Components/SpriteComponent.h"
 #include "../Systems/AnimationSystem.h"
+#include "../Systems/CameraMovementSystem.h"
 #include "../Systems/CollisionSystem.h"
 #include "../Systems/DamageSystem.h"
 #include "../Systems/KeyboardControlSystem.h"
@@ -24,6 +26,11 @@
 #include <SDL3/SDL_hints.h>
 #include <SDL3_image/SDL_image.h>
 #include <glm/glm.hpp>
+
+int Game::WindowWidth = 800;
+int Game::WindowHeight = 600;
+int Game::MapWidth;
+int Game::MapHeight;
 
 Game::Game()
 {
@@ -64,7 +71,7 @@ void Game::Initialize()
 		return;
 	}
 
-	SDL_SetWindowFullscreen(Window, true);
+	SDL_SetWindowFullscreen(Window, false);
 
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 
@@ -74,6 +81,12 @@ void Game::Initialize()
 		Logger::Err("Error creating SDL renderer.");
 		return;
 	}
+
+	// Initialize camera view with entire screen area
+	Camera.x = 0;
+	Camera.y = 0;
+	Camera.w = WindowWidth;
+	Camera.h = WindowHeight;
 
 	IsRunning = true;
 }
@@ -98,6 +111,7 @@ void Game::LoadLevel(int level)
 	Registry_->AddSystem<RenderColliderSystem>();
 	Registry_->AddSystem<DamageSystem>();
 	Registry_->AddSystem<KeyboardControlSystem>();
+	Registry_->AddSystem<CameraMovementSystem>();
 
 	// Adding assets to the asset manager
 	AssetManager_->AddTexture(Renderer, "fruit-image", "./assets/images/FrutinhaOriginalSize.png");
@@ -125,8 +139,9 @@ void Game::LoadLevel(int level)
 		std::string line, value;
 
 		int mapNumCols = 1;
+		int mapNumRows = 1;
 
-		for (int j = 0; j < mapNumCols; j++)
+		for (int j = 0; j < mapNumRows; j++)
 		{
 
 			if (std::getline(mapFile, line))
@@ -151,7 +166,8 @@ void Game::LoadLevel(int level)
 						value = "";
 						if (c == ';')
 						{
-							mapNumCols++;
+							mapNumRows++;
+							mapNumCols = (i > mapNumCols) ? i : mapNumCols;
 						}
 						i++;
 					}
@@ -163,6 +179,8 @@ void Game::LoadLevel(int level)
 			}
 		}
 		mapFile.close();
+		MapWidth = mapNumCols * tileSize * tileScale;
+		MapHeight = mapNumRows * tileSize * tileScale;
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -176,9 +194,10 @@ void Game::LoadLevel(int level)
 	other.AddComponent<TransformComponent>(glm::vec2(300.0, 30.0), glm::vec2(1.0, 1.0), 0.0);
 	other.AddComponent<RigidBodyComponent>(glm::vec2(10.0, 0.0));
 	other.AddComponent<SpriteComponent>("chopper-image", 32, 32, 1);
-	other.AddComponent<AnimationComponent>(2, 10, true);
+	other.AddComponent<AnimationComponent>(2, 15, true);
 	other.AddComponent<BoxColliderComponent>(32,32);
-	other.AddComponent<KeyboardControlledComponent>(glm::vec2(0, -20), glm::vec2(20, 0), glm::vec2(0, 20), glm::vec2(-20,0));
+	other.AddComponent<KeyboardControlledComponent>(glm::vec2(0, -80), glm::vec2(80, 0), glm::vec2(0, 80), glm::vec2(-80,0));
+	other.AddComponent<CameraFollowComponent>();
 
 
 	Entity radar = Registry_->CreateEntity();
@@ -257,6 +276,7 @@ void Game::Update()
 	Registry_->GetSystem<CollisionSystem>().Update(EventBus_);
 	Registry_->GetSystem<DamageSystem>().Update();
 	Registry_->GetSystem<KeyboardControlSystem>().Update();
+	Registry_->GetSystem<CameraMovementSystem>().Update(Camera);
 
 	// Update the Registry (to process the entities waiting to be created/deleted) - this has to be tha last task of the frame
 	Registry_->Update();
@@ -268,7 +288,7 @@ void Game::Render()
 	SDL_RenderClear(Renderer);
 
 	// Invoke all the systems that need to render
-	Registry_->GetSystem<RenderSystem>().Update(Renderer, *AssetManager_);
+	Registry_->GetSystem<RenderSystem>().Update(Renderer, *AssetManager_, Camera);
 
 	if(IsDebug)
 	{

@@ -11,7 +11,7 @@ RenderSystem::RenderSystem()
 	RequireComponent<TransformComponent>();
 }
 
-void RenderSystem::Update(SDL_Renderer* renderer, AssetManager& assetManager)
+void RenderSystem::Update(SDL_Renderer* renderer, AssetManager& assetManager, SDL_Rect& camera)
 {
 	// Create a vector with sprite and transform components for all entities
 	struct RenderableEntity {
@@ -44,8 +44,8 @@ void RenderSystem::Update(SDL_Renderer* renderer, AssetManager& assetManager)
 
 		// Rectangle position and size on screen
 		SDL_FRect destinationRec = {
-			transform.position.x,
-			transform.position.y,
+			transform.position.x - camera.x,
+			transform.position.y - camera.y,
 			sprite.width * transform.scale.x,
 			sprite.height * transform.scale.y
 		};
