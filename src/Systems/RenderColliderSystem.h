@@ -8,5 +8,5 @@ class RenderColliderSystem : public System
 public:
 	RenderColliderSystem();
 
-	void Update(SDL_Renderer* renderer);
+	void Update(SDL_Renderer* renderer, SDL_Rect& camera);
 };

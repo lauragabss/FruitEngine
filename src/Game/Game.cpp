@@ -160,7 +160,7 @@ void Game::LoadLevel(int level)
 						// Texture / SizeX / Size Y / Source X / Source Y
 						int sourceX = ((value[1] - '0') * tileSize);
 						int sourceY = ((value[0] - '0') * tileSize);
-						tile.AddComponent<SpriteComponent>("jungle-tilemap", tileSize, tileSize, 0, sourceX, sourceY);
+						tile.AddComponent<SpriteComponent>("jungle-tilemap", tileSize, tileSize, 0, false,sourceX, sourceY);
 
 						// Add for next position
 						value = "";
@@ -189,6 +189,7 @@ void Game::LoadLevel(int level)
 	fruit.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(3.0, 3.0), 0.0);
 	fruit.AddComponent<RigidBodyComponent>(glm::vec2(5.0, 3.0));
 	fruit.AddComponent<SpriteComponent>("fruit-image", 32, 32, 2);
+	fruit.AddComponent<BoxColliderComponent>(32, 32);
 
 	Entity other = Registry_->CreateEntity();
 	other.AddComponent<TransformComponent>(glm::vec2(300.0, 30.0), glm::vec2(1.0, 1.0), 0.0);
@@ -202,7 +203,7 @@ void Game::LoadLevel(int level)
 
 	Entity radar = Registry_->CreateEntity();
 	radar.AddComponent<TransformComponent>(glm::vec2(WindowWidth - 74, 10.0), glm::vec2(2.0, 2.0), 0.0);
-	radar.AddComponent<SpriteComponent>("radar-image", 64, 64, 3);
+	radar.AddComponent<SpriteComponent>("radar-image", 64, 64, 3, true);
 	radar.AddComponent<AnimationComponent>(8, 10, true, horizontal);
 
 	Entity potion = Registry_->CreateEntity();
@@ -292,7 +293,7 @@ void Game::Render()
 
 	if(IsDebug)
 	{
-		Registry_->GetSystem<RenderColliderSystem>().Update(Renderer);
+		Registry_->GetSystem<RenderColliderSystem>().Update(Renderer, Camera);
 	}
 
 	SDL_RenderPresent(Renderer);

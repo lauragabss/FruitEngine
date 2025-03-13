@@ -44,8 +44,8 @@ void RenderSystem::Update(SDL_Renderer* renderer, AssetManager& assetManager, SD
 
 		// Rectangle position and size on screen
 		SDL_FRect destinationRec = {
-			transform.position.x - camera.x,
-			transform.position.y - camera.y,
+			transform.position.x - (sprite.isFixed ? 0 : camera.x),
+			transform.position.y - (sprite.isFixed ? 0 : camera.y),
 			sprite.width * transform.scale.x,
 			sprite.height * transform.scale.y
 		};
