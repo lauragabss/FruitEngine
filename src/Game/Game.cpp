@@ -7,6 +7,7 @@
 #include "../Components/BoxColliderComponent.h"
 #include "../Components/CameraFollowComponent.h"
 #include "../Components/KeyboardControlledComponent.h"
+#include "../Components/ProjectileEmitterComponent.h"
 #include "../Components/TransformComponent.h"
 #include "../Components/RigidBodyComponent.h"
 #include "../Components/SpriteComponent.h"
@@ -16,6 +17,7 @@
 #include "../Systems/DamageSystem.h"
 #include "../Systems/KeyboardControlSystem.h"
 #include "../Systems/MovementSystem.h"
+#include "../Systems/ProjectileEmitSystem.h"
 #include "../Systems/RenderColliderSystem.h"
 #include "../Systems/RenderSystem.h"
 #include "../AssetManager/AssetManager.h"
@@ -112,6 +114,7 @@ void Game::LoadLevel(int level)
 	Registry_->AddSystem<DamageSystem>();
 	Registry_->AddSystem<KeyboardControlSystem>();
 	Registry_->AddSystem<CameraMovementSystem>();
+	Registry_->AddSystem<ProjectileEmitSystem>();
 
 	// Adding assets to the asset manager
 	AssetManager_->AddTexture(Renderer, "fruit-image", "./assets/images/FrutinhaOriginalSize.png");
@@ -119,6 +122,7 @@ void Game::LoadLevel(int level)
 	AssetManager_->AddTexture(Renderer, "chopper-image", "./assets/images/chopper-spritesheet.png");
 	AssetManager_->AddTexture(Renderer, "radar-image", "./assets/images/radar.png");
 	AssetManager_->AddTexture(Renderer, "potion-image", "./assets/images/Potion.png");
+	AssetManager_->AddTexture(Renderer, "bullet-image", "./assets/images/bullet.png");
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	/// MAP BACKGROUND
@@ -199,6 +203,7 @@ void Game::LoadLevel(int level)
 	other.AddComponent<BoxColliderComponent>(32,32);
 	other.AddComponent<KeyboardControlledComponent>(glm::vec2(0, -80), glm::vec2(80, 0), glm::vec2(0, 80), glm::vec2(-80,0));
 	other.AddComponent<CameraFollowComponent>();
+	other.AddComponent<ProjectileEmitterComponent>(glm::vec2(100.0, 0.0), 5000, 10000, 0, false);
 
 
 	Entity radar = Registry_->CreateEntity();
@@ -278,6 +283,7 @@ void Game::Update()
 	Registry_->GetSystem<DamageSystem>().Update();
 	Registry_->GetSystem<KeyboardControlSystem>().Update();
 	Registry_->GetSystem<CameraMovementSystem>().Update(Camera);
+	Registry_->GetSystem<ProjectileEmitSystem>().Update(*Registry_);
 
 	// Update the Registry (to process the entities waiting to be created/deleted) - this has to be tha last task of the frame
 	Registry_->Update();

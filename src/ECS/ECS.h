@@ -344,7 +344,7 @@ inline void Entity::RemoveComponent()
 template<typename TComponent>
 inline bool Entity::HasComponent() const
 {
-	if (!Registry_) { return; }
+	if (!Registry_) { return false; }
 	return Registry_->HasComponent<TComponent>(*this);
 }
 

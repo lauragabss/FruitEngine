@@ -16,8 +16,8 @@ void DamageSystem::SubscribeToEvents(std::unique_ptr<EventBus>& eventBus)
 void DamageSystem::OnCollision(CollisionEvent& event)
 {
 	Logger::Log("Damage system received an EVENT COLLISION!!!");
-	event.a.Kill();
-	event.b.Kill();
+	//event.a.Kill();
+	//event.b.Kill();
 }
 
 void DamageSystem::Update()
